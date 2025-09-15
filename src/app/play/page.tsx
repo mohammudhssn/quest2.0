@@ -9,7 +9,9 @@ import { Badge } from '@/components/ui/badge'
 import { CheckCircle, ArrowRight, Trophy, Users, Heart, Search, Home } from 'lucide-react'
 import PersonXClue from '@/components/clues/PersonXClue'
 import ParentsClue from '@/components/clues/ParentsClue'
+import CinematicTutorial, { useCinematicTutorial } from '@/components/CinematicTutorial'
 import Link from 'next/link'
+import { useEffect } from 'react'
 
 type GameState = 'onboarding' | 'clue-selection' | 'playing' | 'playing-personx' | 'clue-complete'
 type ClueStep = 
@@ -28,6 +30,32 @@ export default function QuestGamePage() {
   const [totalScore, setTotalScore] = useState(0)
   const [completedClues, setCompletedClues] = useState<string[]>([])
   const [showSuccess, setShowSuccess] = useState(false)
+
+  // Global tutorial for Quest introduction
+  const globalTutorialSteps = [
+    {
+      id: 'quest-welcome',
+      target: 'quest-header',
+      irlTitle: 'Guests Arrive at the Event',
+      irlDescription: "Guests have just arrived at a wedding. They're scanning a QR code at the welcome sign to join the interactive quest experience.",
+      actionTitle: 'Welcome to Quest Demo',
+      actionDescription: "Welcome to Quest! This demo shows how events become live adventures. No real names are used here - everything is simulated for demonstration purposes.",
+      position: 'center' as const,
+      spotlight: false
+    }
+  ]
+
+  const globalTutorial = useCinematicTutorial(globalTutorialSteps)
+
+  // Show global intro on first visit
+  useEffect(() => {
+    if (gameState === 'onboarding' && !globalTutorial.hasSeenIntro) {
+      setTimeout(() => {
+        globalTutorial.startTutorial()
+        globalTutorial.setHasSeenIntro(true)
+      }, 1000)
+    }
+  }, [gameState])
 
   const handleStartQuest = () => {
     if (nickname.trim()) {
@@ -260,10 +288,23 @@ export default function QuestGamePage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-quest-coral-light/20 via-quest-purple-light/20 to-quest-yellow-light/20 flex items-center justify-center p-4">
+      {/* Global Tutorial */}
+      <CinematicTutorial
+        steps={globalTutorialSteps}
+        currentStep={globalTutorial.currentStep}
+        isActive={globalTutorial.isActive}
+        onNext={globalTutorial.nextStep}
+        onPrevious={globalTutorial.previousStep}
+        onReplay={globalTutorial.replayStep}
+        onSkip={globalTutorial.skipTutorial}
+        onToggle={globalTutorial.toggleTutorial}
+        onClose={globalTutorial.closeTutorial}
+      />
+
       <div className="w-full max-w-lg space-y-8">
         
         {/* Header */}
-        <div className="text-center space-y-3">
+        <div className="text-center space-y-3" data-tutorial-target="quest-header">
           <Link href="/landing">
             <h1 className="text-5xl font-bold quest-gradient bg-clip-text text-transparent mb-3 drop-shadow-lg hover:scale-105 transition-transform cursor-pointer">
               Quest

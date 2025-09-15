@@ -7,6 +7,8 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Badge } from '@/components/ui/badge'
 import { CheckCircle, ArrowRight, Search, Users, Eye, Lightbulb, Trophy } from 'lucide-react'
+import CinematicTutorial, { useCinematicTutorial } from '@/components/CinematicTutorial'
+import { useEffect } from 'react'
 
 type PersonXStep = 
   | 'introduction'
@@ -31,6 +33,80 @@ export default function PersonXClue({ onComplete, onBack }: PersonXClueProps) {
   const [part1Hints, setPart1Hints] = useState(0)
   const [part2Hints, setPart2Hints] = useState(0)
   const [showSuccess, setShowSuccess] = useState(false)
+
+  // Tutorial steps for Person X clue
+  const tutorialSteps = [
+    {
+      id: 'global-intro',
+      target: 'body',
+      irlTitle: 'Welcome to the Event',
+      irlDescription: "Guests have just arrived at a wedding. They're scanning a QR code at the welcome sign to join the interactive quest.",
+      actionTitle: 'Demo Introduction',
+      actionDescription: "Welcome to Quest! This demo shows how events become live adventures. No real names are used here - everything is simulated for demonstration.",
+      position: 'center' as const,
+      spotlight: false
+    },
+    {
+      id: 'person-x-intro',
+      target: 'clue-header',
+      irlTitle: 'Mystery Guest Announced',
+      irlDescription: "The emcee announces there's a mystery guest hidden among everyone here. Guests start looking around curiously.",
+      actionTitle: 'Your Mission',
+      actionDescription: "In this clue, your goal is to figure out who Person X is. In real life, guests wouldn't be told about the guest list right away - they'd need to explore and deduce.",
+      position: 'bottom' as const,
+      spotlight: true
+    },
+    {
+      id: 'investigation-tools',
+      target: 'investigation-tools',
+      irlTitle: 'Groups Start Strategizing',
+      irlDescription: "Groups of guests start talking, checking the seating chart, or asking people around. Some approach staff for hints.",
+      actionTitle: 'Choose Your Approach',
+      actionDescription: "Use these investigation tools: either get a hint, or open the guest list. In a real event, guests would need to be more creative!",
+      position: 'center' as const,
+      spotlight: true
+    },
+    {
+      id: 'guest-list-reveal',
+      target: 'guest-list-card',
+      irlTitle: 'Checking the Guest List',
+      irlDescription: "Guests crowd around the printed guest list on a table or wall, scanning names and looking for patterns.",
+      actionTitle: 'Scan for Clues',
+      actionDescription: "Look carefully at the names. One of them breaks the pattern - Person X is listed without a last name. This is your key clue!",
+      position: 'right' as const,
+      spotlight: true
+    },
+    {
+      id: 'answer-submission',
+      target: 'answer-input',
+      irlTitle: 'Team Decision Time',
+      irlDescription: "One person whispers the name to their team, and after a quick discussion, they lock in their answer with confidence.",
+      actionTitle: 'Submit Your Answer',
+      actionDescription: "Type the answer (Person X) and submit. Notice how they stand out from all the other full names in the list.",
+      position: 'top' as const,
+      spotlight: true
+    },
+    {
+      id: 'success-celebration',
+      target: 'success-card',
+      irlTitle: 'Victory Celebration',
+      irlDescription: "Cheering, high-fives, and laughter fill the air. The team celebrates their detective work before moving on to the next challenge.",
+      actionTitle: 'Quest Complete!',
+      actionDescription: "Congrats! You've completed the clue. Click 'Continue to Next Clue' to keep your adventure going.",
+      position: 'center' as const,
+      spotlight: true
+    }
+  ]
+
+  const tutorial = useCinematicTutorial(tutorialSteps)
+
+  // Auto-start tutorial on component mount
+  useEffect(() => {
+    if (!tutorial.hasSeenIntro) {
+      tutorial.startTutorial()
+      tutorial.setHasSeenIntro(true)
+    }
+  }, [])
 
   // Mock guest list for visual clue
   const guestList = [
@@ -113,7 +189,7 @@ export default function PersonXClue({ onComplete, onBack }: PersonXClueProps) {
     switch (step) {
       case 'introduction':
         return (
-          <Card className="premium-card border-0 shadow-2xl">
+          <Card className="premium-card border-0 shadow-2xl" data-tutorial-target="clue-header">
             <CardHeader className="text-center pb-6">
               <div className="mx-auto w-16 h-16 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl flex items-center justify-center mb-4 shadow-lg">
                 <Search className="w-8 h-8 text-white" />
@@ -152,7 +228,7 @@ export default function PersonXClue({ onComplete, onBack }: PersonXClueProps) {
 
       case 'investigation':
         return (
-          <Card className="premium-card border-0 shadow-2xl">
+          <Card className="premium-card border-0 shadow-2xl" data-tutorial-target="investigation-tools">
             <CardHeader className="pb-6">
               <div className="mx-auto w-16 h-16 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl flex items-center justify-center mb-4 shadow-lg">
                 <Search className="w-8 h-8 text-white" />
@@ -230,7 +306,7 @@ export default function PersonXClue({ onComplete, onBack }: PersonXClueProps) {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
-              <div className="bg-white p-5 rounded-2xl border border-slate-200 max-h-64 overflow-y-auto shadow-inner">
+              <div className="bg-white p-5 rounded-2xl border border-slate-200 max-h-64 overflow-y-auto shadow-inner" data-tutorial-target="guest-list-card">
                 <div className="space-y-2">
                   {guestList.map((guest, index) => (
                     <div 
@@ -261,6 +337,7 @@ export default function PersonXClue({ onComplete, onBack }: PersonXClueProps) {
                   value={part1Answer}
                   onChange={(e) => setPart1Answer(e.target.value)}
                   className="h-12 bg-white border-slate-200 focus:border-indigo-400 focus:ring-indigo-400 text-slate-800 placeholder:text-slate-400 shadow-sm"
+                  data-tutorial-target="answer-input"
                 />
                 
                 <div className="flex gap-3">
@@ -596,7 +673,7 @@ export default function PersonXClue({ onComplete, onBack }: PersonXClueProps) {
         const hasBonus = part1Hints === 0 && part2Hints === 0
         
         return (
-          <Card className="premium-card border-0 shadow-2xl">
+          <Card className="premium-card border-0 shadow-2xl" data-tutorial-target="success-card">
             <CardHeader className="text-center pb-6">
               <div className="mx-auto w-24 h-24 bg-gradient-to-br from-amber-400 via-orange-500 to-red-500 rounded-3xl flex items-center justify-center mb-6 shadow-xl">
                 <Trophy className="w-12 h-12 text-white" />
@@ -656,6 +733,19 @@ export default function PersonXClue({ onComplete, onBack }: PersonXClueProps) {
 
   return (
     <div className="space-y-6">
+      {/* Cinematic Tutorial Overlay */}
+      <CinematicTutorial
+        steps={tutorialSteps}
+        currentStep={tutorial.currentStep}
+        isActive={tutorial.isActive}
+        onNext={tutorial.nextStep}
+        onPrevious={tutorial.previousStep}
+        onReplay={tutorial.replayStep}
+        onSkip={tutorial.skipTutorial}
+        onToggle={tutorial.toggleTutorial}
+        onClose={tutorial.closeTutorial}
+      />
+
       {/* Success Animation Overlay */}
       {showSuccess && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50">
