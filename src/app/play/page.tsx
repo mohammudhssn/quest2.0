@@ -9,7 +9,6 @@ import { Badge } from '@/components/ui/badge'
 import { CheckCircle, ArrowRight, Trophy, Users, Heart, Search, Home } from 'lucide-react'
 import PersonXClue from '@/components/clues/PersonXClue'
 import ParentsClue from '@/components/clues/ParentsClue'
-import ContextualTutorial from '@/components/ContextualTutorial'
 import Link from 'next/link'
 
 type GameState = 'onboarding' | 'clue-selection' | 'playing' | 'playing-personx' | 'clue-complete'
@@ -22,31 +21,17 @@ export default function QuestGamePage() {
   const [totalScore, setTotalScore] = useState(0)
   const [completedClues, setCompletedClues] = useState<string[]>([])
   const [showSuccess, setShowSuccess] = useState(false)
-  const [tutorialEnabled, setTutorialEnabled] = useState(true)
   const [showWelcomeOverlay, setShowWelcomeOverlay] = useState(false)
+  const [hasSeenWelcome, setHasSeenWelcome] = useState(false)
 
-  // Global welcome tutorial content
-  const welcomeTutorialContent = [
-    {
-      questStep: 'onboarding',
-      target: 'quest-header',
-      irlTitle: 'Welcome to Your Event',
-      irlDescription: "Imagine: guests have just arrived at a beautiful wedding celebration. They're scanning QR codes at the welcome table, curious about this 'Quest' experience they've heard about.",
-      actionTitle: 'Experience Quest Demo',
-      actionDescription: "You're about to experience how Quest transforms passive guests into engaged participants. This demo uses placeholder names, but imagine your real event with this energy!",
-      emotion: "🎊 The anticipation is building - guests are excited to discover what Quest has in store!",
-      overlayNote: "Quest turns any event into an interactive adventure where guests collaborate, laugh, and create lasting memories together."
-    }
-  ]
-
-  // Show welcome overlay after login
+  // Show welcome overlay after login (only once)
   useEffect(() => {
-    if (gameState === 'clue-selection' && tutorialEnabled && !showWelcomeOverlay) {
+    if (gameState === 'clue-selection' && !hasSeenWelcome) {
       setTimeout(() => {
         setShowWelcomeOverlay(true)
       }, 500)
     }
-  }, [gameState, tutorialEnabled, showWelcomeOverlay])
+  }, [gameState, hasSeenWelcome])
 
   const handleStartQuest = () => {
     if (nickname.trim()) {
@@ -77,6 +62,11 @@ export default function QuestGamePage() {
   const handleBackToSelection = () => {
     setSelectedClue(null)
     setGameState('clue-selection')
+  }
+
+  const dismissWelcome = () => {
+    setShowWelcomeOverlay(false)
+    setHasSeenWelcome(true)
   }
 
   const renderCurrentState = () => {
@@ -132,7 +122,7 @@ export default function QuestGamePage() {
       case 'clue-selection':
         return (
           <>
-            {/* Welcome Scene-Setting Overlay */}
+            {/* Welcome Scene-Setting Overlay - Shows Once */}
             {showWelcomeOverlay && (
               <div className="fixed inset-0 z-[60] pointer-events-none">
                 <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" />
@@ -174,7 +164,7 @@ export default function QuestGamePage() {
                       </div>
 
                       <Button 
-                        onClick={() => setShowWelcomeOverlay(false)}
+                        onClick={dismissWelcome}
                         className="bg-quest-coral hover:bg-quest-coral/90 text-white shadow-lg px-8 py-3 rounded-full"
                       >
                         Begin the Experience
