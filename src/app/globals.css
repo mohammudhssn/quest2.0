@@ -79,3 +79,25 @@
   0% { transform: translateY(100px); opacity: 0; }
   100% { transform: translateY(0); opacity: 1; }
 }
+
+/* Tutorial Spotlight Effects */
+.tutorial-spotlight {
+  position: relative;
+  z-index: 61 !important;
+  box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.8), 0 0 30px rgba(255, 107, 107, 0.6) !important;
+  border-radius: 12px;
+  animation: spotlight-pulse 2s ease-in-out infinite;
+}
+
+@keyframes spotlight-pulse {
+  0%, 100% { 
+    box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.8), 0 0 30px rgba(255, 107, 107, 0.6);
+  }
+  50% { 
+    box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.8), 0 0 40px rgba(255, 107, 107, 0.8);
+  }
+}
+
+.tutorial-backdrop {
+  backdrop-filter: blur(4px);
+}

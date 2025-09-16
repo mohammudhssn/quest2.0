@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -9,18 +9,10 @@ import { Badge } from '@/components/ui/badge'
 import { CheckCircle, ArrowRight, Trophy, Users, Heart, Search, Home } from 'lucide-react'
 import PersonXClue from '@/components/clues/PersonXClue'
 import ParentsClue from '@/components/clues/ParentsClue'
-import CinematicTutorial, { useCinematicTutorial } from '@/components/CinematicTutorial'
+import ContextualTutorial from '@/components/ContextualTutorial'
 import Link from 'next/link'
-import { useEffect } from 'react'
 
 type GameState = 'onboarding' | 'clue-selection' | 'playing' | 'playing-personx' | 'clue-complete'
-type ClueStep = 
-  | 'parent-choice' | 'parent-intro'
-  | 'groom-father' | 'groom-father-correct' | 'groom-mother' | 'groom-mother-correct' | 'groom-proverb-text'
-  | 'bride-father' | 'bride-father-correct' | 'bride-mother' | 'bride-mother-correct' | 'bride-proverb-text'
-  | 'transition' | 'complete'
-
-type ParentPath = 'groom' | 'bride'
 
 export default function QuestGamePage() {
   const [gameState, setGameState] = useState<GameState>('onboarding')
@@ -30,32 +22,31 @@ export default function QuestGamePage() {
   const [totalScore, setTotalScore] = useState(0)
   const [completedClues, setCompletedClues] = useState<string[]>([])
   const [showSuccess, setShowSuccess] = useState(false)
+  const [tutorialEnabled, setTutorialEnabled] = useState(true)
+  const [showWelcomeOverlay, setShowWelcomeOverlay] = useState(false)
 
-  // Global tutorial for Quest introduction
-  const globalTutorialSteps = [
+  // Global welcome tutorial content
+  const welcomeTutorialContent = [
     {
-      id: 'quest-welcome',
+      questStep: 'onboarding',
       target: 'quest-header',
-      irlTitle: 'Guests Arrive at the Event',
-      irlDescription: "Guests have just arrived at a wedding. They're scanning a QR code at the welcome sign to join the interactive quest experience.",
-      actionTitle: 'Welcome to Quest Demo',
-      actionDescription: "Welcome to Quest! This demo shows how events become live adventures. No real names are used here - everything is simulated for demonstration purposes.",
-      position: 'center' as const,
-      spotlight: false
+      irlTitle: 'Welcome to Your Event',
+      irlDescription: "Imagine: guests have just arrived at a beautiful wedding celebration. They're scanning QR codes at the welcome table, curious about this 'Quest' experience they've heard about.",
+      actionTitle: 'Experience Quest Demo',
+      actionDescription: "You're about to experience how Quest transforms passive guests into engaged participants. This demo uses placeholder names, but imagine your real event with this energy!",
+      emotion: "🎊 The anticipation is building - guests are excited to discover what Quest has in store!",
+      overlayNote: "Quest turns any event into an interactive adventure where guests collaborate, laugh, and create lasting memories together."
     }
   ]
 
-  const globalTutorial = useCinematicTutorial(globalTutorialSteps)
-
-  // Show global intro on first visit
+  // Show welcome overlay after login
   useEffect(() => {
-    if (gameState === 'onboarding' && !globalTutorial.hasSeenIntro) {
+    if (gameState === 'clue-selection' && tutorialEnabled && !showWelcomeOverlay) {
       setTimeout(() => {
-        globalTutorial.startTutorial()
-        globalTutorial.setHasSeenIntro(true)
-      }, 1000)
+        setShowWelcomeOverlay(true)
+      }, 500)
     }
-  }, [gameState])
+  }, [gameState, tutorialEnabled, showWelcomeOverlay])
 
   const handleStartQuest = () => {
     if (nickname.trim()) {
@@ -140,81 +131,125 @@ export default function QuestGamePage() {
 
       case 'clue-selection':
         return (
-          <Card className="quest-card border-0 shadow-2xl">
-            <CardHeader className="text-center pb-6">
-              <div className="flex items-center justify-center space-x-2 mb-4">
-                <Trophy className="w-8 h-8 text-quest-yellow" />
-                <Badge variant="secondary" className="bg-quest-yellow-light text-quest-yellow px-4 py-2 text-lg font-semibold">
-                  Score: {totalScore} points
-                </Badge>
-              </div>
-              <CardTitle className="text-3xl font-bold quest-gradient bg-clip-text text-transparent">
-                Choose Your Adventure
-              </CardTitle>
-              <CardDescription className="text-slate-600 text-lg">
-                Welcome {nickname}! Select a clue to begin your quest
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="grid grid-cols-1 gap-4">
-                <Button 
-                  onClick={() => handleSelectClue('parents')}
-                  className="h-auto p-6 bg-gradient-to-r from-quest-coral to-quest-purple hover:from-quest-coral/90 hover:to-quest-purple/90 text-white group transition-all transform hover:scale-[1.02] shadow-lg hover:shadow-xl"
-                  disabled={completedClues.includes('parents')}
-                >
-                  <div className="flex items-center space-x-4 w-full">
-                    <div className="p-3 bg-white/20 rounded-xl group-hover:bg-white/30 transition-colors">
-                      <Users className="w-6 h-6" />
-                    </div>
-                    <div className="text-left flex-1">
-                      <div className="font-semibold text-lg">Parents' Wisdom</div>
-                      <div className="text-sm text-pink-100 opacity-90">Discover ancient proverbs from both families</div>
-                      <div className="text-xs text-pink-200 mt-1">Difficulty: Medium • Reward: Up to 20 points</div>
-                    </div>
-                    {completedClues.includes('parents') ? (
-                      <CheckCircle className="w-6 h-6 text-green-300" />
-                    ) : (
-                      <ArrowRight className="w-5 h-5 opacity-70 group-hover:opacity-100 group-hover:translate-x-1 transition-all" />
-                    )}
-                  </div>
-                </Button>
+          <>
+            {/* Welcome Scene-Setting Overlay */}
+            {showWelcomeOverlay && (
+              <div className="fixed inset-0 z-[60] pointer-events-none">
+                <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" />
+                <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[90vw] max-w-lg pointer-events-auto">
+                  <Card className="quest-card border-0 shadow-2xl bg-white/98 backdrop-blur-xl animate-scale-in">
+                    <CardContent className="p-8 text-center">
+                      <div className="mb-6">
+                        <div className="mx-auto w-20 h-20 bg-gradient-to-br from-quest-coral via-quest-purple to-quest-yellow rounded-full flex items-center justify-center mb-4 shadow-xl">
+                          <span className="text-white text-2xl">🎊</span>
+                        </div>
+                        <Badge className="bg-quest-coral text-white px-4 py-2 text-sm mb-4">
+                          Quest Demo Experience
+                        </Badge>
+                      </div>
 
-                <Button 
-                  onClick={() => handleSelectClue('personx')}
-                  className="h-auto p-6 bg-gradient-to-r from-quest-purple to-quest-yellow hover:from-quest-purple/90 hover:to-quest-yellow/90 text-white group transition-all transform hover:scale-[1.02] shadow-lg hover:shadow-xl"
-                  disabled={completedClues.includes('personx')}
-                >
-                  <div className="flex items-center space-x-4 w-full">
-                    <div className="p-3 bg-white/20 rounded-xl group-hover:bg-white/30 transition-colors">
-                      <Search className="w-6 h-6" />
-                    </div>
-                    <div className="text-left flex-1">
-                      <div className="font-semibold text-lg">Mystery Guest</div>
-                      <div className="text-sm text-yellow-100 opacity-90">Find the special person using clever clues</div>
-                      <div className="text-xs text-yellow-200 mt-1">Difficulty: Easy • Reward: Up to 15 points</div>
-                    </div>
-                    {completedClues.includes('personx') ? (
-                      <CheckCircle className="w-6 h-6 text-green-300" />
-                    ) : (
-                      <ArrowRight className="w-5 h-5 opacity-70 group-hover:opacity-100 group-hover:translate-x-1 transition-all" />
-                    )}
-                  </div>
-                </Button>
-              </div>
+                      <div className="space-y-4 mb-6">
+                        <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-4 rounded-xl border border-blue-200">
+                          <p className="font-bold text-blue-900 text-sm mb-2">🎪 Picture This Scene:</p>
+                          <p className="text-sm text-blue-800 leading-relaxed">
+                            Guests have just arrived at a beautiful wedding. They're scanning QR codes, curious and excited. 
+                            The energy is building as they discover this isn't just another passive event - it's an adventure!
+                          </p>
+                        </div>
 
-              {completedClues.length > 0 && (
-                <div className="bg-gradient-to-r from-green-50 to-emerald-50 p-4 rounded-2xl border border-green-200">
-                  <div className="flex items-center space-x-3">
-                    <CheckCircle className="w-6 h-6 text-green-600" />
-                    <div>
-                      <p className="font-semibold text-green-800">Great Progress!</p>
-                      <p className="text-sm text-green-600">You've completed {completedClues.length} clue{completedClues.length !== 1 ? 's' : ''}</p>
-                    </div>
-                  </div>
+                        <div className="bg-gradient-to-r from-green-50 to-emerald-50 p-4 rounded-xl border border-green-200">
+                          <p className="font-bold text-green-900 text-sm mb-2">✨ The Quest Magic:</p>
+                          <p className="text-sm text-green-800 leading-relaxed">
+                            You're about to experience how Quest transforms strangers into teammates, 
+                            creates unforgettable moments, and makes every guest an active participant in the celebration.
+                          </p>
+                        </div>
+
+                        <div className="bg-gradient-to-r from-yellow-50 to-orange-50 p-4 rounded-xl border border-yellow-200">
+                          <p className="font-bold text-yellow-900 text-sm mb-2">💡 Demo Note:</p>
+                          <p className="text-sm text-yellow-800 leading-relaxed">
+                            This uses placeholder names and simplified scenarios, but imagine the possibilities for your real events!
+                          </p>
+                        </div>
+                      </div>
+
+                      <Button 
+                        onClick={() => setShowWelcomeOverlay(false)}
+                        className="bg-quest-coral hover:bg-quest-coral/90 text-white shadow-lg px-8 py-3 rounded-full"
+                      >
+                        Begin the Experience
+                        <ArrowRight className="w-4 h-4 ml-2" />
+                      </Button>
+                    </CardContent>
+                  </Card>
                 </div>
-              )}
-            </CardContent>
-          </Card>
+              </div>
+            )}
+
+            <Card className="quest-card border-0 shadow-2xl" data-tutorial-target="quest-header">
+              <CardHeader className="text-center pb-6">
+                <div className="flex items-center justify-center space-x-2 mb-4">
+                  <Trophy className="w-8 h-8 text-quest-yellow" />
+                  <Badge variant="secondary" className="bg-quest-yellow-light text-quest-yellow px-4 py-2 text-lg font-semibold">
+                    Score: {totalScore} points
+                  </Badge>
+                </div>
+                <CardTitle className="text-3xl font-bold quest-gradient bg-clip-text text-transparent">
+                  Choose Your Adventure
+                </CardTitle>
+                <CardDescription className="text-slate-600 text-lg">
+                  Welcome {nickname}! Select a clue to begin your quest
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="grid grid-cols-1 gap-4">
+                  <Button 
+                    onClick={() => handleSelectClue('personx')}
+                    className="h-auto p-6 bg-gradient-to-r from-quest-purple to-quest-yellow hover:from-quest-purple/90 hover:to-quest-yellow/90 text-white group transition-all transform hover:scale-[1.02] shadow-lg hover:shadow-xl"
+                    disabled={completedClues.includes('personx')}
+                  >
+                    <div className="flex items-center space-x-4 w-full">
+                      <div className="p-3 bg-white/20 rounded-xl group-hover:bg-white/30 transition-colors">
+                        <Search className="w-6 h-6" />
+                      </div>
+                      <div className="text-left flex-1">
+                        <div className="font-semibold text-lg">Mystery Guest</div>
+                        <div className="text-sm text-yellow-100 opacity-90">Find the special person using clever clues</div>
+                        <div className="text-xs text-yellow-200 mt-1">Difficulty: Easy • Reward: Up to 15 points</div>
+                      </div>
+                      {completedClues.includes('personx') ? (
+                        <CheckCircle className="w-6 h-6 text-green-300" />
+                      ) : (
+                        <ArrowRight className="w-5 h-5 opacity-70 group-hover:opacity-100 group-hover:translate-x-1 transition-all" />
+                      )}
+                    </div>
+                  </Button>
+
+                  <Button 
+                    onClick={() => handleSelectClue('parents')}
+                    className="h-auto p-6 bg-gradient-to-r from-quest-coral to-quest-purple hover:from-quest-coral/90 hover:to-quest-purple/90 text-white group transition-all transform hover:scale-[1.02] shadow-lg hover:shadow-xl"
+                    disabled={completedClues.includes('parents')}
+                  >
+                    <div className="flex items-center space-x-4 w-full">
+                      <div className="p-3 bg-white/20 rounded-xl group-hover:bg-white/30 transition-colors">
+                        <Users className="w-6 h-6" />
+                      </div>
+                      <div className="text-left flex-1">
+                        <div className="font-semibold text-lg">Parents' Wisdom</div>
+                        <div className="text-sm text-pink-100 opacity-90">Discover ancient proverbs from both families</div>
+                        <div className="text-xs text-pink-200 mt-1">Difficulty: Medium • Reward: Up to 20 points</div>
+                      </div>
+                      {completedClues.includes('parents') ? (
+                        <CheckCircle className="w-6 h-6 text-green-300" />
+                      ) : (
+                        <ArrowRight className="w-5 h-5 opacity-70 group-hover:opacity-100 group-hover:translate-x-1 transition-all" />
+                      )}
+                    </div>
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </>
         )
 
       case 'playing':
@@ -244,7 +279,7 @@ export default function QuestGamePage() {
                 Quest Complete! 🎉
               </CardTitle>
               <CardDescription className="text-slate-600 text-lg">
-                Congratulations {nickname}! You've completed the adventure
+                Congratulations {nickname}! You've experienced the Quest magic
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6 text-center">
@@ -253,7 +288,7 @@ export default function QuestGamePage() {
                 <div className="text-4xl font-bold quest-gradient bg-clip-text text-transparent">
                   {totalScore} Points
                 </div>
-                <p className="text-slate-600 mt-2">Amazing work exploring the quest!</p>
+                <p className="text-slate-600 mt-2">Amazing work exploring the quest experience!</p>
               </div>
 
               <div className="space-y-4">
@@ -282,25 +317,12 @@ export default function QuestGamePage() {
         )
 
       default:
-        return <div className="text-white text-center">Step not implemented yet: {gameState}</div>
+        return <div className="text-white text-center">Loading...</div>
     }
   }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-quest-coral-light/20 via-quest-purple-light/20 to-quest-yellow-light/20 flex items-center justify-center p-4">
-      {/* Global Tutorial */}
-      <CinematicTutorial
-        steps={globalTutorialSteps}
-        currentStep={globalTutorial.currentStep}
-        isActive={globalTutorial.isActive}
-        onNext={globalTutorial.nextStep}
-        onPrevious={globalTutorial.previousStep}
-        onReplay={globalTutorial.replayStep}
-        onSkip={globalTutorial.skipTutorial}
-        onToggle={globalTutorial.toggleTutorial}
-        onClose={globalTutorial.closeTutorial}
-      />
-
       <div className="w-full max-w-lg space-y-8">
         
         {/* Header */}
